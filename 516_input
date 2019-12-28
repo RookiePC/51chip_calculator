@@ -1,0 +1,9 @@
+
+#ifndef __516_input__
+#define __516_input__
+
+
+void get_key( unsigned char * );
+
+
+#endif
