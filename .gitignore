@@ -1,0 +1,10 @@
+
+*.hex
+51calculator
+lcd.LST
+*.OBJ
+*.LST
+*.lnp
+*.M51
+*.uvopt
+*.plg
