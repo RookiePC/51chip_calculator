@@ -8,3 +8,4 @@ lcd.LST
 *.M51
 *.uvopt
 *.plg
+*.bak
