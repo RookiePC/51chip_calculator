@@ -8,6 +8,7 @@
 #define popStack(stk) (--stk.top)
 #define topStack(stk) (stk.num[stk.top])
 #define resetStack(stk) (stk.top = -1)
+#define sizeOfStack(stk) (stk.top + 1)
 #define StackIsEmpty(stk) (stk.top < 0)
 #define OpLevel(c) (c == '+' || c == '-' ? 1 : (c == '*' || c == '/' ? 3 : (c == 'm' || c == '$' ? 2 : 0)))
 #define IsNumber(c) (c >= '0' && c <= '9')
@@ -16,7 +17,7 @@
 
 // used to store the final result									
 float result;
-
+char error;
 unsigned char iterate_lcd_ram(unsigned char read_pos)
 {
 	unsigned char _data;
@@ -57,13 +58,122 @@ float Q_sqrt(float z)
     return g;
 }
 
+float calc(Stk* stk) {
+    Stk s;
+    float tmp;
+    resetStack(s);
+    if (StackIsEmpty((*stk))) {
+        return 0;
+    }
+    while (!StackIsEmpty((*stk))) {
+        //Node top = topStack((*stk));
+        if (topStack((*stk)).isChar && topStack((*stk)).payload == '+') {
+            if (topStack(s).isChar) {
+                error = 1;
+                break;
+            }
+            tmp = topStack(s).payload;
+            popStack(s);
+            if (topStack(s).isChar) {
+                error = 1;
+                break;
+            }
+            tmp = tmp + topStack(s).payload;
+            popStack(s);
+        }
+        else if (topStack((*stk)).isChar && topStack((*stk)).payload == '-') {
+            if (topStack(s).isChar) {
+                error = 1;
+                break;
+            }
+            tmp = topStack(s).payload;
+            popStack(s);
+            if (topStack(s).isChar) {
+                error = 1;
+                break;
+            }
+            tmp = topStack(s).payload - tmp;
+            popStack(s);
+        }
+        else if (topStack((*stk)).isChar && topStack((*stk)).payload == '*') {
+            if (topStack(s).isChar) {
+                error = 1;
+                break;
+            }
+            tmp = topStack(s).payload;
+            popStack(s);
+            if (topStack(s).isChar) {
+                error = 1;
+                break;
+            }
+            tmp = tmp * topStack(s).payload;
+            popStack(s);
+        }
+        else if (topStack((*stk)).isChar && topStack((*stk)).payload == '/') {
+            if (topStack(s).isChar) {
+                error = 1;
+                break;
+            }
+            tmp = topStack(s).payload;
+            popStack(s);
+            if (topStack(s).isChar) {
+                error = 1;
+                break;
+            }
+            tmp = topStack(s).payload / tmp;
+            popStack(s);
+        }
+        else if (topStack((*stk)).isChar && topStack((*stk)).payload == 'm') {
+            if (topStack(s).isChar) {
+                error = 1;
+                break;
+            }
+            tmp = topStack(s).payload;
+            popStack(s);
+            tmp = -tmp;
+        }
+        else if (topStack((*stk)).isChar && topStack((*stk)).payload == '$') {
+            if (topStack(s).isChar) {
+                error = 1;
+                break;
+            }
+            tmp = topStack(s).payload;
+            popStack(s);
+            tmp = Q_sqrt(tmp);
+        }
+        else if (topStack((*stk)).isChar && topStack((*stk)).payload == 'u') {
+            if (topStack(s).isChar) {
+                error = 1;
+                break;
+            }
+            tmp = topStack(s).payload;
+            popStack(s);
+            tmp = pow(tmp, 1.0 / 3);
+        }
+        else {
+            if (topStack(s).isChar) {
+                error = 1;
+                break;
+            }
+            tmp = topStack((*stk)).payload;
+        }
+        popStack((*stk));
+        pushStack(s, tmp, 0);
+    }
+    if (error || StackIsEmpty(s)) {
+        return 0;
+    }
+    return topStack(s).payload;
+}
+
+
 void rePolish(Stk* stk) {
     Stk s;
 	bit isNum = 0;
 	char t;
 	unsigned char str = 0x80;
     resetStack(s);
-    for( ; iterate_lcd_ram( str ) ; str++) {
+    for( ; iterate_lcd_ram( str ) && error ; str++) {
         t = iterate_lcd_ram( str );
 		if ( t == 0 )
 			break;
@@ -123,6 +233,9 @@ void rePolish(Stk* stk) {
             pushStack((*stk), strnum, 0);
             --str;
         }
+        if (sizeOfStack((*stk)) >= 3) {
+            pushStack((*stk), calc(stk), 0);
+        }
     }
     while (!StackIsEmpty(s)) {
         pushStack((*stk), topStack(s).payload, topStack(s).isChar);
@@ -130,63 +243,6 @@ void rePolish(Stk* stk) {
     }
 }
 
-float calc(Stk* stk) {
-    Stk s;
-	float tmp;
-    resetStack(s);
-    while (!StackIsEmpty((*stk))) {
-        //Node top = topStack((*stk));
-        if (topStack((*stk)).isChar && topStack((*stk)).payload == '+') {
-            tmp = topStack(s).payload;
-            popStack(s);
-            tmp = tmp + topStack(s).payload;
-            popStack(s);
-        }
-        else if (topStack((*stk)).isChar && topStack((*stk)).payload == '-') {
-            tmp = topStack(s).payload;
-            popStack(s);
-            tmp = topStack(s).payload - tmp;
-            popStack(s);
-        }
-        else if (topStack((*stk)).isChar && topStack((*stk)).payload == '*') {
-            tmp = topStack(s).payload;
-            popStack(s);
-            tmp = tmp * topStack(s).payload;
-            popStack(s);
-        }
-        else if (topStack((*stk)).isChar && topStack((*stk)).payload == '/') {
-            tmp = topStack(s).payload;
-            popStack(s);
-            tmp = topStack(s).payload / tmp;
-            popStack(s);
-        }
-        else if (topStack((*stk)).isChar && topStack((*stk)).payload == 'm') {
-            tmp = topStack(s).payload;
-            popStack(s);
-            tmp = -tmp;
-        }
-        else if (topStack((*stk)).isChar && topStack((*stk)).payload == '$') {
-            tmp = topStack(s).payload;
-            popStack(s);
-            tmp = Q_sqrt(tmp);
-        }
-        else if (topStack((*stk)).isChar && topStack((*stk)).payload == 'u') {
-            tmp = topStack(s).payload;
-            popStack(s);
-            tmp = pow(tmp, 1.0 / 3);
-        }
-        else {
-            tmp = topStack((*stk)).payload;
-        }
-        popStack((*stk));
-        pushStack(s, tmp, 0);
-    }
-		
-		if( StackIsEmpty(s)) {
-			return 0;
-		}
-    return topStack(s).payload;
-}
 
 void reverseStack(Stk* stk) {
     int s = 0, e = (*stk).top;
@@ -201,6 +257,7 @@ void reverseStack(Stk* stk) {
 }
 
 void calculate() {
+    result = error = 0;
     Stk stk;
 		result = 0;
     resetStack(stk);
@@ -234,8 +291,7 @@ void display_string()
 		result = ((int)(result*1e3)+1)/1e3;
 	}
 	*/
-	result += 0.0005;
-	if (result / weight >= 10) {
+	if (error || result / weight >= 10) {
 	    LcdWriteData('E');
 	    LcdWriteData('r');
 	    LcdWriteData('r');
@@ -243,7 +299,17 @@ void display_string()
 	    LcdWriteData('r');
 	    return;
 	}
-	while((int)(result / weight) == 0) {
+	if (result < 0) {
+	    LcdWriteData('-');
+	    result = -result;
+	}
+	if (result == 0) {
+	    LcdWriteData('0');
+	    return;
+	}
+    result += 0.0005;
+
+    while((int)(result / weight) == 0) {
 	    if (result == 0) {
 	        break;
 	    }
