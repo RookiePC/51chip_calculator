@@ -12,7 +12,7 @@
 #define StackIsEmpty(stk) (stk.top < 0)
 #define OpLevel(c) (c == '+' || c == '-' ? 1 : (c == '*' || c == '/' ? 3 : (c == 'm' || c == '$' ? 2 : 0)))
 #define IsNumber(c) (c >= '0' && c <= '9')
-#define OneOp(c) (c == 'm' || c == '$')
+#define OneOp(c) (c == 'm' || c == '$' || c == 'q')
 
 // used to store the final result									
 unsigned char Lcd_result_string[17];
@@ -82,8 +82,10 @@ void rePolish(Stk* stk) {
             }
         } else if (t == '$') {
             pushStack(s, '$', 1);
+        } else if (t == 'q') {
+            pushStack(s, 'q', 1);
         }
-        else if (t == '+' || t == '*' || t == '/' || t == 'd') {
+        else if (t == '+' || t == '*' || t == '/') {
             while (OpLevel(topStack(s).payload) >= OpLevel(t)) {
                 pushStack((*stk), topStack(s).payload, 1);
                 popStack(s);
@@ -167,6 +169,11 @@ float calc(Stk* stk) {
             tmp = topStack(s).payload;
             popStack(s);
             tmp = Q_sqrt(tmp);
+        }
+        else if (topStack((*stk)).isChar && topStack((*stk)).payload == 'q') {
+            tmp = topStack(s).payload;
+            popStack(s);
+            tmp = pow(tmp, 1.0 / 3);
         }
         else {
             tmp = topStack((*stk)).payload;
