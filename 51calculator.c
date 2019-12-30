@@ -1,8 +1,6 @@
 #include<reg51.h>
 #include"lcd.h"
 #include "516_input.h"
-
-#include<stdio.h>
 #include<math.h>
 #define pushStack(stk, target, _char) stk.num[++stk.top].payload = (float)target; \
 														stk.num[stk.top].isChar = _char;
@@ -40,7 +38,7 @@ typedef struct Node {
 
 typedef struct {
     char top;
-    Node num[6];
+    Node num[7];
 }Stk;
 
 
@@ -223,6 +221,13 @@ void display_string()
 	LcdWriteCom( 0xC0 );
 	LcdWriteCom( 0x06 );
 	weight = 1e16;
+	/*
+	if ( result * 1e4 -((int)(result * 1e3 ))*10 >= 5)
+	{
+		result = ((int)(result*1e3)+1)/1e3;
+	}
+	*/
+	result += 0.0005;
 	if (result / weight >= 10) {
 	    LcdWriteData('E');
 	    LcdWriteData('r');

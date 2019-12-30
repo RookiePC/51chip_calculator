@@ -128,7 +128,7 @@ int get_key( unsigned char * record  )
 		DELAY( 1000 );
 		if ( K5 == 0 )
 		{
-			*record = 'q';
+			*record = 'u';
 			while ( !K5 );
 			return 1;
 		}	
