@@ -7,10 +7,10 @@
 #define OpLevel(c) (c == '+' || c == '-' ? 1 : (c == '*' || c == '/' ? 3 : (c == 'm' || c == '$' ? 2 : 0)))
 #define IsNumber(c) (c >= '0' && c <= '9')
 #define OneOp(c) (c == 'm' || c == '$')
-#define bit int
+
 typedef struct Node {
     float payload;
-    int isChar;
+    bit isChar;
 } Node;
 typedef struct {
     int top;
@@ -171,6 +171,7 @@ void calculate(char* str, char* output) {
     sprintf(output, "%.3f", res);
 }
 
+/*
 int main() {
     char str[1000], buffer[1000];
     while (gets(str)) {
@@ -178,3 +179,4 @@ int main() {
         printf("%s\n", buffer);
     }
 }
+*/

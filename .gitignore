@@ -9,3 +9,5 @@ lcd.LST
 *.uvopt
 *.plg
 *.bak
+*.htm
+*.__i

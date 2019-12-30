@@ -213,7 +213,7 @@
               <RCB>
                 <Type>0</Type>
                 <StartAddress>0x0</StartAddress>
-                <Size>0x10000</Size>
+                <Size>0xffff</Size>
               </RCB>
               <RXB>
                 <Type>0</Type>
@@ -350,6 +350,11 @@
               <FileName>51calculator.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\51calculator.c</FilePath>
+            </File>
+            <File>
+              <FileName>516_input.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\516_input.c</FilePath>
             </File>
             <File>
               <FileName>lcd.c</FileName>

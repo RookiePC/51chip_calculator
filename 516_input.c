@@ -15,6 +15,7 @@ return:			0 for no key pressed, 1 for key pressed.
 int get_key( unsigned char * record  )
 {
 	unsigned char counter;
+	unsigned char characters[6] = {'.', 'C', '+', '-', '*', '/'};
 	// matrix key detection
 	MATRIX_PIN = 0x0f;
 	if ( MATRIX_PIN != 0x0f )
@@ -67,7 +68,11 @@ int get_key( unsigned char * record  )
 
 			// ignore the release action ( 
 			while ( MATRIX_PIN != 0xf0);
-
+			
+			if ( *record < 10 )
+				*record += '0';
+			else
+				*record = characters[*record % 10];
 			// notify success
 			return 1;
 		}
@@ -79,7 +84,7 @@ int get_key( unsigned char * record  )
 		DELAY( 1000 );
 		if ( K1 == 0 )
 		{
-			*record = 16;
+			*record = '(';
 			while ( !K1 );
 			return 1;
 		}	
@@ -90,7 +95,7 @@ int get_key( unsigned char * record  )
 		DELAY( 1000 );
 		if ( K2 == 0 )
 		{
-			*record = 17;
+			*record = ')';
 			while ( !K2 );
 			return 1;
 		}	
@@ -101,7 +106,7 @@ int get_key( unsigned char * record  )
 		DELAY( 1000 );
 		if ( K3 == 0 )
 		{
-			*record = 18;
+			*record = '$';
 			while ( !K3 );
 			return 1;
 		}	
@@ -112,7 +117,7 @@ int get_key( unsigned char * record  )
 		DELAY( 1000 );
 		if ( K4 == 0 )
 		{
-			*record = 19;
+			*record = '=';
 			while ( !K4 );
 			return 1;
 		}	

@@ -116,7 +116,7 @@ void LcdWriteData(uchar dat)			//写入数据
 void LcdInit()						  //LCD初始化子程序
 {
  	LcdWriteCom(0x38);  //开显示
-	LcdWriteCom(0x0c);  //开显示不显示光标
+	LcdWriteCom(0x0e);  //开显示不显示光标
 	LcdWriteCom(0x06);  //写一个指针加1
 	LcdWriteCom(0x01);  //清屏
 	LcdWriteCom(0x80);  //设置数据指针起点
@@ -132,3 +132,14 @@ void LcdInit()						  //LCD初始化子程序
 	LcdWriteCom(0x80);  //设置数据指针起点
 }
 #endif
+
+unsigned char ReadLcdData()
+{
+	unsigned char byte;
+	LCD1602_RW = 1;
+	LCD1602_RS = 1;
+	LCD1602_E = 1;
+	Lcd1602_Delay1ms(5);	// instead of checking busy, work with delay
+	byte = LCD1602_DATAPINS;//^0x80;
+	return byte;
+}
