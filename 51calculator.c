@@ -2,6 +2,7 @@
 #include"lcd.h"
 #include "516_input.h"
 #include<math.h>
+#include "extend_rom.h"
 #define pushStack(stk, target, _char) stk.num[++stk.top].payload = (float)target; \
 														stk.num[stk.top].isChar = _char;
 #define popStack(stk) (--stk.top)
@@ -11,6 +12,7 @@
 #define OpLevel(c) (c == '+' || c == '-' ? 1 : (c == '*' || c == '/' ? 3 : (c == 'm' || c == '$' ? 2 : 0)))
 #define IsNumber(c) (c >= '0' && c <= '9')
 #define OneOp(c) (c == 'm' || c == '$' || c == 'u')
+#define __CALC__
 
 // used to store the final result									
 float result;
@@ -38,7 +40,7 @@ typedef struct Node {
 
 typedef struct {
     char top;
-    Node num[7];
+    Node num[15];
 }Stk;
 
 
@@ -179,6 +181,10 @@ float calc(Stk* stk) {
         popStack((*stk));
         pushStack(s, tmp, 0);
     }
+		
+		if( StackIsEmpty(s)) {
+			return 0;
+		}
     return topStack(s).payload;
 }
 
@@ -196,6 +202,7 @@ void reverseStack(Stk* stk) {
 
 void calculate() {
     Stk stk;
+		result = 0;
     resetStack(stk);
     rePolish(&stk);
     reverseStack(&stk);
@@ -268,11 +275,11 @@ void main()
 	LcdInit();
 	while(1)
 	{
-		//keyscan();
 		if ( get_key( &key ) == 1 )
 		{
 		 	if ( key == '=' )
 			{
+#ifdef __CALC__
 				calculate();
 				display_string();
 				while( 1 )
@@ -285,12 +292,26 @@ void main()
 							LcdWriteData( key );
 						break;
 					}
-				} 
+				}
+#endif
+				//-------------- test extend rom ----
+				
+#ifdef __ROM_TEST__
+				LcdWriteCom( 0xC0 );
+				for(key = 0; key <=counter; key++)
+				{
+					LcdWriteData( RomRead( key ) );
+				}
+#endif
+				
+				//-------------- end
+
 			}
 			else	if ( key == 'C' )
 			{
 				LcdWriteCom( 0x01 );
 				LcdWriteCom( 0x06 );
+				counter = 0;
 			}
 			else
 			{
@@ -299,6 +320,15 @@ void main()
 					LcdWriteCom( 0x07 ); 	
 				}
 				LcdWriteData( key );
+				
+				//-------------- test extend rom ----
+				
+#if __ROM_TEST__
+
+				RomWrite(counter, key);
+#endif
+				
+				//-------------- end
 				counter++;
 			}
 
