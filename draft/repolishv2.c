@@ -1,5 +1,5 @@
 #include<stdio.h>
-#define pushStack(stk, target, isChar) (stk.num[++stk.top] = {(float)target, isChar})
+#define pushStack(stk, target, isChar) (stk.num[++stk.top] = (Node){(float)target, isChar})
 #define popStack(stk) (--stk.top)
 #define topStack(stk) (stk.num[stk.top])
 #define resetStack(stk) (stk.top = -1)
@@ -7,15 +7,13 @@
 #define OpLevel(c) (c == '+' || c == '-' ? 1 : (c == '*' || c == '/' ? 3 : (c == 'm' || c == '$' ? 2 : 0)))
 #define IsNumber(c) (c >= '0' && c <= '9')
 #define OneOp(c) (c == 'm' || c == '$')
-
-using namespace std;
-
-struct Node {
+#define bit int
+typedef struct Node {
     float payload;
-    bool isChar;
-};
+    int isChar;
+} Node;
 typedef struct {
-    int top = -1;
+    int top;
     Node num[10];
 }Stk;
 
@@ -35,49 +33,50 @@ float Q_sqrt(float z)
 
 void rePolish(char* str, Stk* stk) {
     Stk s;
-    bool isNum = false;
+    resetStack(s);
+    bit isNum = 0;
     for (; *str; ++str) {
         char t = *str;
         if (t == ' ') {
             continue;
         }
         if (t == '(') {
-            pushStack(s, t, true);
+            pushStack(s, t, 1);
         }
         else if (t == ')') {
             while (topStack(s).isChar && topStack(s).payload != '(') {
-                pushStack((*stk), topStack(s).payload, true);
+                pushStack((*stk), topStack(s).payload, 1);
                 popStack(s);
             }
             popStack(s);
             while(!StackIsEmpty(s) && topStack(s).isChar && OneOp(topStack(s).payload)) {
-                pushStack((*stk), topStack(s).payload, true);
+                pushStack((*stk), topStack(s).payload, 1);
                 popStack(s);
             }
         } else if (t == '$') {
-            pushStack(s, '$', true);
+            pushStack(s, '$', 1);
         }
         else if (t == '+' || t == '*' || t == '/' || t == 'd') {
             while (OpLevel(topStack(s).payload) >= OpLevel(t)) {
-                pushStack((*stk), topStack(s).payload, true);
+                pushStack((*stk), topStack(s).payload, 1);
                 popStack(s);
             }
-            pushStack(s, t, true);
+            pushStack(s, t, 1);
         } else if (t == '-') {
             if (isNum) {
                 while (OpLevel(topStack(s).payload) >= OpLevel(t)) {
-                    pushStack((*stk), topStack(s).payload, true);
+                    pushStack((*stk), topStack(s).payload, 1);
                     popStack(s);
                 }
-                pushStack(s, t, true);
+                pushStack(s, t, 1);
             }
             else {
-                pushStack(s, 'm', true);
+                pushStack(s, 'm', 1);
             }
         } else {
             float strnum = 0;
             while (IsNumber(*str)) {
-                isNum = true;
+                isNum = 1;
                 strnum *= 10;
                 strnum += *str - '0';
                 ++str;
@@ -91,7 +90,7 @@ void rePolish(char* str, Stk* stk) {
                     ++str;
                 }
             }
-            pushStack((*stk), strnum, false);
+            pushStack((*stk), strnum, 0);
             --str;
         }
     }
@@ -103,6 +102,7 @@ void rePolish(char* str, Stk* stk) {
 
 float calc(Stk* stk) {
     Stk s;
+    resetStack(s);
     float tmp;
     while (!StackIsEmpty((*stk))) {
         Node top = topStack((*stk));
@@ -144,7 +144,7 @@ float calc(Stk* stk) {
             tmp = topStack((*stk)).payload;
         }
         popStack((*stk));
-        pushStack(s, tmp, false);
+        pushStack(s, tmp, 0);
     }
     return topStack(s).payload;
 }
@@ -161,15 +161,20 @@ void reverseStack(Stk* stk) {
     }
 }
 
+void calculate(char* str, char* output) {
+    Stk stk;
+    resetStack(stk);
+    rePolish(str, &stk);
+    reverseStack(&stk);
+    // cout << tmp << endl;
+    float res = calc(&stk);
+    sprintf(output, "%.3f", res);
+}
+
 int main() {
-    char str[1000];
+    char str[1000], buffer[1000];
     while (gets(str)) {
-        Stk stk;
-        resetStack(stk);
-        rePolish(str, &stk);
-        reverseStack(&stk);
-        // cout << tmp << endl;
-        float res = calc(&stk);
-        printf("%.2f\n", res);
+        calculate(str, buffer);
+        printf("%s\n", buffer);
     }
 }
