@@ -122,6 +122,17 @@ int get_key( unsigned char * record  )
 			return 1;
 		}	
 	}
+	
+	if ( K5 == 0)
+	{
+		DELAY( 1000 );
+		if ( K5 == 0 )
+		{
+			*record = 'q';
+			while ( !K5 );
+			return 1;
+		}	
+	}
 
 
 	/*

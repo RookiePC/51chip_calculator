@@ -28,7 +28,6 @@ PIN口定义
 sbit LCD1602_E=P2^7;
 sbit LCD1602_RW=P2^5;
 sbit LCD1602_RS=P2^6;
-sbit LCD1602_Busy = LCD1602_DATAPINS^7;
 
 /**********************************
 函数声明

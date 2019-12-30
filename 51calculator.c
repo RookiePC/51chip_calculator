@@ -40,7 +40,7 @@ typedef struct Node {
 
 typedef struct {
     char top;
-    Node num[7];
+    Node num[6];
 }Stk;
 
 
