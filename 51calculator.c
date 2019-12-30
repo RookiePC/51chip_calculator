@@ -12,10 +12,10 @@
 #define StackIsEmpty(stk) (stk.top < 0)
 #define OpLevel(c) (c == '+' || c == '-' ? 1 : (c == '*' || c == '/' ? 3 : (c == 'm' || c == '$' ? 2 : 0)))
 #define IsNumber(c) (c >= '0' && c <= '9')
-#define OneOp(c) (c == 'm' || c == '$' || c == 'q')
+#define OneOp(c) (c == 'm' || c == '$' || c == 'u')
 
 // used to store the final result									
-unsigned char Lcd_result_string[17];
+float result;
 
 unsigned char iterate_lcd_ram(unsigned char read_pos)
 {
@@ -82,8 +82,8 @@ void rePolish(Stk* stk) {
             }
         } else if (t == '$') {
             pushStack(s, '$', 1);
-        } else if (t == 'q') {
-            pushStack(s, 'q', 1);
+        } else if (t == 'u') {
+            pushStack(s, 'u', 1);
         }
         else if (t == '+' || t == '*' || t == '/') {
             while (OpLevel(topStack(s).payload) >= OpLevel(t)) {
@@ -170,7 +170,7 @@ float calc(Stk* stk) {
             popStack(s);
             tmp = Q_sqrt(tmp);
         }
-        else if (topStack((*stk)).isChar && topStack((*stk)).payload == 'q') {
+        else if (topStack((*stk)).isChar && topStack((*stk)).payload == 'u') {
             tmp = topStack(s).payload;
             popStack(s);
             tmp = pow(tmp, 1.0 / 3);
@@ -198,12 +198,10 @@ void reverseStack(Stk* stk) {
 
 void calculate() {
     Stk stk;
-	float res;
     resetStack(stk);
     rePolish(&stk);
     reverseStack(&stk);
-    res = calc(&stk);
-    sprintf(Lcd_result_string, "%.3f", res);
+    result = calc(&stk);
 }
 
 /*
@@ -220,11 +218,39 @@ int main() {
 void display_string()
 {
 	unsigned char counter;
+	char trailZero;
+	float weight;
 	LcdWriteCom( 0xC0 );
 	LcdWriteCom( 0x06 );
-	for( counter = 0; counter < 17 && Lcd_result_string[counter]; counter++)
+	weight = 1e16;
+	if (result / weight >= 10) {
+	    LcdWriteData('E');
+	    LcdWriteData('r');
+	    LcdWriteData('r');
+	    LcdWriteData('o');
+	    LcdWriteData('r');
+	    return;
+	}
+	while((int)(result / weight) == 0) {
+	    if (result == 0) {
+	        break;
+	    }
+	    weight /= 10;
+	}
+	trailZero = 0;
+	for( counter = 0; counter < 16 && trailZero < 4; counter++)
 	{
-		LcdWriteData( Lcd_result_string[counter] );
+	    LcdWriteData((int)( result / weight) + '0');
+	    result = result - ((int)(result / weight)) * weight;
+	    if (trailZero) {
+	        ++trailZero;
+	    }
+	    if (((int)weight) == 1) {
+	        LcdWriteData('.');
+	        trailZero = 1;
+	    }
+	    weight /= 10;
+		//LcdWriteData( Lcd_result_string[counter] );
 	}
 }
 
