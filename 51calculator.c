@@ -243,6 +243,11 @@ void display_string()
 	    LcdWriteData('r');
 	    return;
 	}
+	if (result < 0) {
+	    LcdWriteData('-');
+	    result = -result;
+	    weight = 1e15;
+	}
 	while((int)(result / weight) == 0) {
 	    if (result == 0) {
 	        break;
