@@ -7,14 +7,17 @@
 														stk.num[stk.top].isChar = _char;
 #define popStack(stk) (--stk.top)
 #define topStack(stk) (stk.num[stk.top])
+#define sizeOfStack(stk) (stk.top + 1)
 #define resetStack(stk) (stk.top = -1)
 #define StackIsEmpty(stk) (stk.top < 0)
 #define OpLevel(c) (c == '+' || c == '-' ? 1 : (c == '*' || c == '/' ? 3 : (c == 'm' || c == '$' ? 2 : 0)))
+#define TopLevel(c) (OpLevel(c) == 3)
 #define IsNumber(c) (c >= '0' && c <= '9')
-#define OneOp(c) (c == 'm' || c == '$' || c == 'u')
+#define OneOp(c) (c == 'm' || c == '$' || c == 'u' || c == 'p')
+#define TwoOp(ch) (OneOp(ch) != 1)
 #define __CALC__
 
-// used to store the final result									
+// used to store the final result
 float result;
 
 unsigned char iterate_lcd_ram(unsigned char read_pos)
@@ -23,13 +26,13 @@ unsigned char iterate_lcd_ram(unsigned char read_pos)
 
 	if ( read_pos > 0xA7 || read_pos < 0x80)
 		return 0;
-	 
+
 	LcdWriteCom( read_pos );
 	_data = ReadLcdData();
 
 	if ( _data == 0x20 )
-		return 0; 
-	
+		return 0;
+
 	return _data;
 }
 
@@ -40,7 +43,7 @@ typedef struct Node {
 
 typedef struct {
     char top;
-    Node num[15];
+    Node num[7];
 }Stk;
 
 
@@ -57,85 +60,20 @@ float Q_sqrt(float z)
     return g;
 }
 
-void rePolish(Stk* stk) {
+float calc(Stk* stk, char* size) {
     Stk s;
-	bit isNum = 0;
-	char t;
-	unsigned char str = 0x80;
-    resetStack(s);
-    for( ; iterate_lcd_ram( str ) ; str++) {
-        t = iterate_lcd_ram( str );
-		if ( t == 0 )
-			break;
-        else if (t == '(') {
-            pushStack(s, t, 1);
-        }
-        else if (t == ')') {
-            while (topStack(s).isChar && topStack(s).payload != '(') {
-                pushStack((*stk), topStack(s).payload, 1);
-                popStack(s);
-            }
-            popStack(s);
-            while(!StackIsEmpty(s) && topStack(s).isChar && OneOp(topStack(s).payload)) {
-                pushStack((*stk), topStack(s).payload, 1);
-                popStack(s);
-            }
-        } else if (t == '$') {
-            pushStack(s, '$', 1);
-        } else if (t == 'u') {
-            pushStack(s, 'u', 1);
-        }
-        else if (t == '+' || t == '*' || t == '/') {
-            while (OpLevel(topStack(s).payload) >= OpLevel(t)) {
-                pushStack((*stk), topStack(s).payload, 1);
-                popStack(s);
-            }
-            pushStack(s, t, 1);
-        } else if (t == '-') {
-            if (isNum) {
-                while (OpLevel(topStack(s).payload) >= OpLevel(t)) {
-                    pushStack((*stk), topStack(s).payload, 1);
-                    popStack(s);
-                }
-                pushStack(s, t, 1);
-            }
-            else {
-                pushStack(s, 'm', 1);
-            }
-        } else {
-            float strnum = 0;
-			float loadBit;
-            while (IsNumber(iterate_lcd_ram( str ))) {
-                isNum = 1;
-                strnum *= 10;
-                strnum += iterate_lcd_ram( str ) - '0';
-                ++str;
-            }
-            if (iterate_lcd_ram( str ) == '.') {
-                ++str;
-                loadBit = 0.1f;
-                while(IsNumber(iterate_lcd_ram( str ))) {
-                    strnum = strnum + (iterate_lcd_ram( str ) - '0') * loadBit;
-                    loadBit *= 0.1;
-                    ++str;
-                }
-            }
-            pushStack((*stk), strnum, 0);
-            --str;
-        }
-    }
-    while (!StackIsEmpty(s)) {
-        pushStack((*stk), topStack(s).payload, topStack(s).isChar);
-        popStack(s);
-    }
-}
-
-float calc(Stk* stk) {
-    Stk s;
-	float tmp;
+    float tmp;
     resetStack(s);
     while (!StackIsEmpty((*stk))) {
         //Node top = topStack((*stk));
+        if (topStack((*stk)).isChar) {
+            if (TwoOp(topStack((*stk)).payload) && sizeOfStack(s) < 2) {
+                break;
+            }
+            if (OneOp(topStack((*stk)).payload) && sizeOfStack(s) < 1) {
+                break;
+            }
+        }
         if (topStack((*stk)).isChar && topStack((*stk)).payload == '+') {
             tmp = topStack(s).payload;
             popStack(s);
@@ -181,11 +119,23 @@ float calc(Stk* stk) {
         popStack((*stk));
         pushStack(s, tmp, 0);
     }
-		
-		if( StackIsEmpty(s)) {
-			return 0;
-		}
-    return topStack(s).payload;
+
+    if( StackIsEmpty(s)) {
+        *size = 1;
+        return 0;
+    }
+    if (sizeOfStack(s) > 1) {
+        *size = sizeOfStack(s);
+        while(sizeOfStack(s) > 0) {
+            pushStack((*stk), topStack(s).payload, topStack(s).isChar);
+            popStack(s);
+        }
+        return 0;
+    }
+    else {
+        *size = 0;
+        return topStack(s).payload;
+    }
 }
 
 void reverseStack(Stk* stk) {
@@ -200,25 +150,103 @@ void reverseStack(Stk* stk) {
     }
 }
 
+
+void rePolish(Stk* stk) {
+    Stk s;
+    bit isNum = 0;
+    char t;
+    unsigned char str = 0x80;
+    resetStack(s);
+    for( ; iterate_lcd_ram( str ) ; str++) {
+        t = iterate_lcd_ram( str );
+        if ( t == 0 )
+            break;
+        else if (t == '(') {
+            pushStack(s, t, 1);
+        }
+        else if (t == ')') {
+            while (topStack(s).isChar && topStack(s).payload != '(') {
+                pushStack((*stk), topStack(s).payload, 1);
+                popStack(s);
+            }
+            popStack(s);
+            while(!StackIsEmpty(s) && topStack(s).isChar && OneOp(topStack(s).payload)) {
+                pushStack((*stk), topStack(s).payload, 1);
+                popStack(s);
+            }
+        } else if (t == '$') {
+            pushStack(s, '$', 1);
+        } else if (t == 'u') {
+            pushStack(s, 'u', 1);
+        }
+        else if (t == '*' || t == '/') {
+            while (OpLevel(topStack(s).payload) >= OpLevel(t)) {
+                pushStack((*stk), topStack(s).payload, 1);
+                popStack(s);
+            }
+            pushStack(s, t, 1);
+        } else if (t == '+' || t == '-') {
+            if (isNum) {
+                while (OpLevel(topStack(s).payload) >= OpLevel(t)) {
+                    pushStack((*stk), topStack(s).payload, 1);
+                    popStack(s);
+                }
+                pushStack(s, t, 1);
+            }
+            else {
+                if (t == '-') {
+                    pushStack(s, 'm', 1);
+                }
+            }
+        } else {
+            float strnum = 0;
+            float loadBit;
+            while (IsNumber(iterate_lcd_ram( str ))) {
+                strnum *= 10;
+                strnum += iterate_lcd_ram( str ) - '0';
+                ++str;
+            }
+            if (iterate_lcd_ram( str ) == '.') {
+                ++str;
+                loadBit = 0.1f;
+                while(IsNumber(iterate_lcd_ram( str ))) {
+                    strnum = strnum + (iterate_lcd_ram( str ) - '0') * loadBit;
+                    loadBit *= 0.1;
+                    ++str;
+                }
+            }
+            pushStack((*stk), strnum, 0);
+            --str;
+            t = iterate_lcd_ram(str);
+        }
+        isNum = IsNumber(t);
+        if (sizeOfStack((*stk)) >= 3) {
+            while (!StackIsEmpty(s) && topStack(s).isChar && TopLevel(topStack(s).payload)) {
+                pushStack((*stk), topStack(s).payload, topStack(s).isChar);
+                popStack(s);
+            }
+            reverseStack(stk);
+            result = calc(stk, &error);
+            reverseStack(stk);
+            if (result != 0) {
+                pushStack((*stk), result, 0);
+            }
+        }
+    }
+    while (!StackIsEmpty(s)) {
+        pushStack((*stk), topStack(s).payload, topStack(s).isChar);
+        popStack(s);
+    }
+}
+
 void calculate() {
     Stk stk;
-		result = 0;
+    result = 0;
     resetStack(stk);
     rePolish(&stk);
     reverseStack(&stk);
-    result = calc(&stk);
+    result = calc(&stk, &error);
 }
-
-/*
-int main() {
-    char str[1000], buffer[1000];
-    while (gets(str)) {
-        calculate(str, buffer);
-        printf("%s\n", buffer);
-    }
-}
-*/
-
 
 void display_string()
 {
@@ -227,48 +255,49 @@ void display_string()
 	float weight;
 	LcdWriteCom( 0xC0 );
 	LcdWriteCom( 0x06 );
-	weight = 1e16;
-	/*
-	if ( result * 1e4 -((int)(result * 1e3 ))*10 >= 5)
-	{
-		result = ((int)(result*1e3)+1)/1e3;
-	}
-	*/
-	result += 0.0005;
-	if (result / weight >= 10) {
-	    LcdWriteData('E');
-	    LcdWriteData('r');
-	    LcdWriteData('r');
-	    LcdWriteData('o');
-	    LcdWriteData('r');
-	    return;
-	}
-	if (result < 0) {
-	    LcdWriteData('-');
-	    result = -result;
-	    weight = 1e15;
-	}
-	while((int)(result / weight) == 0) {
-	    if (result == 0) {
-	        break;
-	    }
-	    weight /= 10;
-	}
-	trailZero = 0;
-	for( counter = 0; counter < 16 && trailZero < 4; counter++)
-	{
-	    LcdWriteData((int)( result / weight) + '0');
-	    result = result - ((int)(result / weight)) * weight;
-	    if (trailZero) {
-	        ++trailZero;
-	    }
-	    if (((int)weight) == 1) {
-	        LcdWriteData('.');
-	        trailZero = 1;
-	    }
-	    weight /= 10;
-		//LcdWriteData( Lcd_result_string[counter] );
-	}
+    weight = 1e16;
+    if (error || result / weight >= 10) {
+        LcdWriteData('E');
+        LcdWriteData('r');
+        LcdWriteData('r');
+        LcdWriteData('o');
+        LcdWriteData('r');
+        return;
+    }
+    if (result < 0) {
+        LcdWriteData('-');
+        result = -result;
+        weight = 1e15;
+    }
+    if (result != 0) {
+        result += 0.0005;
+        while ((int) (result / weight) == 0) {
+            weight /= 10;
+        }
+    }
+    else {
+        weight = 1;
+    }
+    trailZero = 0;
+    if (weight < 1) {
+        trailZero = 1;
+        LcdWriteData('0');
+        LcdWriteData('.');
+    }
+    for( counter = 0; counter < 16 && trailZero < 4; counter++)
+    {
+        LcdWriteData((int)( result / weight) + '0');
+        result = result - ((int)(result / weight)) * weight;
+        if (trailZero) {
+            ++trailZero;
+        }
+        if (((int)weight) == 1) {
+            LcdWriteData('.');
+            trailZero = 1;
+        }
+        weight /= 10;
+        //LcdWriteData( Lcd_result_string[counter] );
+    }
 }
 
 
