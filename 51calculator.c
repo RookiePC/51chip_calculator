@@ -60,6 +60,19 @@ float Q_sqrt(float z)
     return g;
 }
 
+void reverseStack(Stk* stk) {
+    int s = 0, e = (*stk).top;
+    Node tmp;
+    while(s < e) {
+        tmp = (*stk).num[s];
+        (*stk).num[s] = (*stk).num[e];
+        (*stk).num[e] = tmp;
+        ++s;
+        --e;
+    }
+}
+
+
 float calc(Stk* stk, char* size) {
     Stk s;
     float tmp;
@@ -138,19 +151,6 @@ float calc(Stk* stk, char* size) {
     }
 }
 
-void reverseStack(Stk* stk) {
-    int s = 0, e = (*stk).top;
-    Node tmp;
-    while(s < e) {
-        tmp = (*stk).num[s];
-        (*stk).num[s] = (*stk).num[e];
-        (*stk).num[e] = tmp;
-        ++s;
-        --e;
-    }
-}
-
-
 void rePolish(Stk* stk) {
     Stk s;
     bit isNum = 0;
@@ -221,14 +221,14 @@ void rePolish(Stk* stk) {
         }
         isNum = IsNumber(t);
         if (sizeOfStack((*stk)) >= 3) {
-            while (!StackIsEmpty(s) && topStack(s).isChar && TopLevel(topStack(s).payload)) {
+            if (!StackIsEmpty(s) && !topStack((*stk)).isChar && TopLevel(topStack(s).payload)) {
                 pushStack((*stk), topStack(s).payload, topStack(s).isChar);
                 popStack(s);
             }
             reverseStack(stk);
             result = calc(stk, &error);
             reverseStack(stk);
-            if (result != 0) {
+            if (error == 0) {
                 pushStack((*stk), result, 0);
             }
         }
