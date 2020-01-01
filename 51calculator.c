@@ -1,7 +1,8 @@
 #include<reg51.h>
-#include"lcd.h"
+#include "lcd.h"
 #include "516_input.h"
 #include<math.h>
+
 #define pushStack(stk, target, _char) stk.num[++stk.top].payload = (float)target; \
 														stk.num[stk.top].isChar = _char;
 #define popStack(stk) (--stk.top)
@@ -318,9 +319,13 @@ void main()
 	{
 		if ( get_key( &key ) == 1 )
 		{
-		 	if ( key == '=' )
+			RESTART:
+		 	if ( key == '=')
 			{
+				
 #ifdef __CALC__
+				if ( counter == 0)
+						continue;
 				calculate();
 				if ( counter > 16 )
 				{
@@ -333,34 +338,17 @@ void main()
 					LcdWriteCom( 0x06 );
 				}
 				display_string();
+				counter = 0;
 				while( 1 )
 				{
 					if ( get_key( &key ) == 1)
 					{
 						LcdWriteCom( 0x01 );
 						LcdWriteCom( 0x06 );
-						if ( key != 'C' )
-						{
-							LcdWriteData( key );
-							counter = 1;
-						}
-						else
-							counter = 0;
-						break;
+						goto RESTART;
 					}
 				}
 #endif
-				//-------------- test extend rom ----
-				
-#ifdef __ROM_TEST__
-				LcdWriteCom( 0xC0 );
-				for(key = 0; key <=counter; key++)
-				{
-					LcdWriteData( RomRead( key ) );
-				}
-#endif
-				
-				//-------------- end
 
 			}
 			else	if ( key == 'C' )
@@ -375,6 +363,10 @@ void main()
 				{
 					LcdWriteCom( 0x07 ); 	
 				}
+				else if ( counter == 38 )
+				{
+					continue;
+				}
 				LcdWriteData( key );
 				
 				if ( key == '$' || key == 'u' )
@@ -382,23 +374,11 @@ void main()
 						LcdWriteData( '(' );
 						counter++;
 				}
-				
-				//-------------- test extend rom ----
-				
-#if __ROM_TEST__
 
-				RomWrite(counter, key);
-#endif
-				
-				//-------------- end
 				counter++;
 			}
 
-			if ( counter == 40 )
-			{
-				LcdWriteCom( 0x06 );
-				LcdWriteCom( 0x01 );
-			}
+			
 		}	
 	}
 }
