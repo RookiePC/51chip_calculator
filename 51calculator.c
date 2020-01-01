@@ -2,7 +2,6 @@
 #include"lcd.h"
 #include "516_input.h"
 #include<math.h>
-#include "extend_rom.h"
 #define pushStack(stk, target, _char) stk.num[++stk.top].payload = (float)target; \
 														stk.num[stk.top].isChar = _char;
 #define popStack(stk) (--stk.top)
@@ -19,6 +18,8 @@
 
 // used to store the final result
 float result;
+
+char error;
 
 unsigned char iterate_lcd_ram(unsigned char read_pos)
 {
@@ -43,7 +44,7 @@ typedef struct Node {
 
 typedef struct {
     char top;
-    Node num[7];
+    Node num[13];
 }Stk;
 
 
@@ -77,6 +78,7 @@ float calc(Stk* stk, char* size) {
     Stk s;
     float tmp;
     resetStack(s);
+		*size = 0;
     while (!StackIsEmpty((*stk))) {
         //Node top = topStack((*stk));
         if (topStack((*stk)).isChar) {
@@ -90,26 +92,33 @@ float calc(Stk* stk, char* size) {
         if (topStack((*stk)).isChar && topStack((*stk)).payload == '+') {
             tmp = topStack(s).payload;
             popStack(s);
-            tmp = tmp + topStack(s).payload;
+            tmp = tmp * 1000 + topStack(s).payload * 1000;
             popStack(s);
+						tmp /= 1000;
+						tmp += 0.00031;
         }
         else if (topStack((*stk)).isChar && topStack((*stk)).payload == '-') {
             tmp = topStack(s).payload;
             popStack(s);
-            tmp = topStack(s).payload - tmp;
+            tmp = topStack(s).payload*1000 - tmp*1000;
             popStack(s);
+						tmp /= 1000;
+						tmp += 0.00031;
         }
         else if (topStack((*stk)).isChar && topStack((*stk)).payload == '*') {
             tmp = topStack(s).payload;
             popStack(s);
-            tmp = tmp * topStack(s).payload;
+            tmp = tmp*1000 * topStack(s).payload*1000;
             popStack(s);
+						tmp /= 1e6;
+						tmp += 0.00031;
         }
         else if (topStack((*stk)).isChar && topStack((*stk)).payload == '/') {
             tmp = topStack(s).payload;
             popStack(s);
-            tmp = topStack(s).payload / tmp;
+            tmp = topStack(s).payload *1000 / (tmp * 1000);
             popStack(s);
+						tmp += 0.00031;
         }
         else if (topStack((*stk)).isChar && topStack((*stk)).payload == 'm') {
             tmp = topStack(s).payload;
@@ -146,7 +155,7 @@ float calc(Stk* stk, char* size) {
         return 0;
     }
     else {
-        *size = 0;
+        
         return topStack(s).payload;
     }
 }
@@ -253,8 +262,6 @@ void display_string()
 	unsigned char counter;
 	char trailZero;
 	float weight;
-	LcdWriteCom( 0xC0 );
-	LcdWriteCom( 0x06 );
     weight = 1e16;
     if (error || result / weight >= 10) {
         LcdWriteData('E');
@@ -315,6 +322,16 @@ void main()
 			{
 #ifdef __CALC__
 				calculate();
+				if ( counter > 16 )
+				{
+						LcdWriteCom( 0xC0 + counter-16 );
+						LcdWriteCom( 0x06 );
+				}
+				else
+				{
+					LcdWriteCom( 0xC0 );
+					LcdWriteCom( 0x06 );
+				}
 				display_string();
 				while( 1 )
 				{
@@ -323,7 +340,12 @@ void main()
 						LcdWriteCom( 0x01 );
 						LcdWriteCom( 0x06 );
 						if ( key != 'C' )
+						{
 							LcdWriteData( key );
+							counter = 1;
+						}
+						else
+							counter = 0;
 						break;
 					}
 				}
@@ -354,6 +376,12 @@ void main()
 					LcdWriteCom( 0x07 ); 	
 				}
 				LcdWriteData( key );
+				
+				if ( key == '$' || key == 'u' )
+				{
+						LcdWriteData( '(' );
+						counter++;
+				}
 				
 				//-------------- test extend rom ----
 				
