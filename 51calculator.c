@@ -78,47 +78,47 @@ float calc(Stk* stk, char* size) {
     Stk s;
     float tmp;
     resetStack(s);
-		*size = 0;
+    *size = 0;
     while (!StackIsEmpty((*stk))) {
-        //Node top = topStack((*stk));
         if (topStack((*stk)).isChar) {
-            if (TwoOp(topStack((*stk)).payload) && sizeOfStack(s) < 2) {
-                break;
-            }
-            if (OneOp(topStack((*stk)).payload) && sizeOfStack(s) < 1) {
-                break;
+            if ((TwoOp(topStack((*stk)).payload) && sizeOfStack(s) < 2)
+                || (OneOp(topStack((*stk)).payload) && sizeOfStack(s) < 1)
+                || (topStack(s).payload < 0 && topStack((*stk)).payload == '$')) {
+                END:
+                *size = 1;
+                while(sizeOfStack(s) > 0) {
+                    pushStack((*stk), topStack(s).payload, topStack(s).isChar);
+                    popStack(s);
+                }
+                return 0;
             }
         }
         if (topStack((*stk)).isChar && topStack((*stk)).payload == '+') {
             tmp = topStack(s).payload;
             popStack(s);
-            tmp = tmp * 1000 + topStack(s).payload * 1000;
+            tmp = tmp + topStack(s).payload;
             popStack(s);
-						tmp /= 1000;
-						tmp += 0.00031;
         }
         else if (topStack((*stk)).isChar && topStack((*stk)).payload == '-') {
             tmp = topStack(s).payload;
             popStack(s);
-            tmp = topStack(s).payload*1000 - tmp*1000;
+            tmp = topStack(s).payload - tmp;
             popStack(s);
-						tmp /= 1000;
-						tmp += 0.00031;
         }
         else if (topStack((*stk)).isChar && topStack((*stk)).payload == '*') {
             tmp = topStack(s).payload;
             popStack(s);
-            tmp = tmp*1000 * topStack(s).payload*1000;
+            tmp = tmp * topStack(s).payload;
             popStack(s);
-						tmp /= 1e6;
-						tmp += 0.00031;
         }
         else if (topStack((*stk)).isChar && topStack((*stk)).payload == '/') {
             tmp = topStack(s).payload;
+            if (fabs(tmp) < 1e-3) {
+                goto END;
+            }
             popStack(s);
-            tmp = topStack(s).payload *1000 / (tmp * 1000);
+            tmp = topStack(s).payload / tmp;
             popStack(s);
-						tmp += 0.00031;
         }
         else if (topStack((*stk)).isChar && topStack((*stk)).payload == 'm') {
             tmp = topStack(s).payload;
@@ -127,6 +127,9 @@ float calc(Stk* stk, char* size) {
         }
         else if (topStack((*stk)).isChar && topStack((*stk)).payload == '$') {
             tmp = topStack(s).payload;
+            if (tmp < 0) {
+                goto END;
+            }
             popStack(s);
             tmp = Q_sqrt(tmp);
         }
@@ -135,8 +138,11 @@ float calc(Stk* stk, char* size) {
             popStack(s);
             tmp = pow(tmp, 1.0 / 3);
         }
-        else {
+        else if (!topStack((*stk)).isChar){
             tmp = topStack((*stk)).payload;
+        }
+        else {
+            goto END;
         }
         popStack((*stk));
         pushStack(s, tmp, 0);
@@ -155,7 +161,6 @@ float calc(Stk* stk, char* size) {
         return 0;
     }
     else {
-        
         return topStack(s).payload;
     }
 }
