@@ -228,6 +228,10 @@ void rePolish(Stk* stk) {
             if (iterate_lcd_ram( str ) == '.') {
                 ++str;
                 loadBit = 0.1f;
+                if (!IsNumber(iterate_lcd_ram( str ))) {
+                    error = 1;
+                    return;
+                }
                 while(IsNumber(iterate_lcd_ram( str ))) {
                     strnum = strnum + (iterate_lcd_ram( str ) - '0') * loadBit;
                     loadBit *= 0.1;
