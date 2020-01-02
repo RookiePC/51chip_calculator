@@ -180,11 +180,17 @@ void rePolish(Stk* stk) {
             pushStack(s, t, 1);
         }
         else if (t == ')') {
-            while (topStack(s).isChar && topStack(s).payload != '(') {
+            while (!StackIsEmpty(s) && topStack(s).isChar && topStack(s).payload != '(') {
                 pushStack((*stk), topStack(s).payload, 1);
                 popStack(s);
             }
-            popStack(s);
+            if (!StackIsEmpty(s) && topStack(s).isChar && topStack(s).payload == '(') {
+                popStack(s);
+            }
+            else {
+                error = 1;
+                return;
+            }
             while(!StackIsEmpty(s) && topStack(s).isChar && OneOp(topStack(s).payload)) {
                 pushStack((*stk), topStack(s).payload, 1);
                 popStack(s);
@@ -267,7 +273,7 @@ void rePolish(Stk* stk) {
 void calculate() {
     Stk stk;
     result = 0;
-		error = 0;
+    error = 0;
     resetStack(stk);
     rePolish(&stk);
     if (error) {
