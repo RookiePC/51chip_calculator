@@ -216,6 +216,10 @@ void rePolish(Stk* stk) {
         } else {
             float strnum = 0;
             float loadBit;
+            if (!IsNumber(iterate_lcd_ram( str ))) {
+                error = 1;
+                return;
+            }
             while (IsNumber(iterate_lcd_ram( str ))) {
                 strnum *= 10;
                 strnum += iterate_lcd_ram( str ) - '0';
@@ -282,7 +286,7 @@ void display_string()
         result = -result;
         weight = 1e15;
     }
-    if (result != 0) {
+    if (fabs(result) > 1e-3) {
         result += 0.0005;
         while ((int) (result / weight) == 0) {
             weight /= 10;
