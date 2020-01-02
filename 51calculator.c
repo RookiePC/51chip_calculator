@@ -270,10 +270,9 @@ void calculate() {
 		error = 0;
     resetStack(stk);
     rePolish(&stk);
-		if (error)
-		{
-				return;
-		}
+    if (error) {
+        return;
+    }
     reverseStack(&stk);
     result = calc(&stk, &error);
 }
