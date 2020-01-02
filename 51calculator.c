@@ -254,6 +254,8 @@ void rePolish(Stk* stk) {
             if (error == 0) {
                 pushStack((*stk), result, 0);
             }
+						
+						//error = 0;
         }
     }
     while (!StackIsEmpty(s)) {
@@ -265,8 +267,13 @@ void rePolish(Stk* stk) {
 void calculate() {
     Stk stk;
     result = 0;
+		error = 0;
     resetStack(stk);
     rePolish(&stk);
+		if (error)
+		{
+				return;
+		}
     reverseStack(&stk);
     result = calc(&stk, &error);
 }

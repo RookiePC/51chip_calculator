@@ -54,9 +54,9 @@ void LcdInit()						  //LCD初始化子程序
 unsigned char ReadLcdData()
 {
 	unsigned char byte;
-	LCD1602_RW = 1;
-	LCD1602_RS = 1;
 	LCD1602_E = 1;
+	LCD1602_RS = 1;
+	LCD1602_RW = 1;
 	Lcd1602_Delay1ms(5);	// instead of checking busy, work with delay
 	byte = LCD1602_DATAPINS;//^0x80;
 	return byte;
