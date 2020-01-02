@@ -267,6 +267,9 @@ void calculate() {
     result = 0;
     resetStack(stk);
     rePolish(&stk);
+    if (error) {
+        return;
+    }
     reverseStack(&stk);
     result = calc(&stk, &error);
 }
