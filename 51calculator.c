@@ -188,7 +188,7 @@ void rePolish(Stk* stk) {
                 popStack(s);
             }
             else {
-                error = 1;
+                error = -1;
                 return;
             }
             while(!StackIsEmpty(s) && topStack(s).isChar && OneOp(topStack(s).payload)) {
@@ -223,7 +223,7 @@ void rePolish(Stk* stk) {
             float strnum = 0;
             float loadBit;
             if (!IsNumber(iterate_lcd_ram( str ))) {
-                error = 1;
+                error = -1;
                 return;
             }
             while (IsNumber(iterate_lcd_ram( str ))) {
@@ -235,7 +235,7 @@ void rePolish(Stk* stk) {
                 ++str;
                 loadBit = 0.1f;
                 if (!IsNumber(iterate_lcd_ram( str ))) {
-                    error = 1;
+                    error = -1;
                     return;
                 }
                 while(IsNumber(iterate_lcd_ram( str ))) {
@@ -276,7 +276,7 @@ void calculate() {
     error = 0;
     resetStack(stk);
     rePolish(&stk);
-    if (error) {
+    if (error == -1) {
         return;
     }
     reverseStack(&stk);
